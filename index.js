@@ -67,7 +67,21 @@ let persons = [
   
     if (!body.name) {
       return response.status(400).json({ 
-        error: 'content missing' 
+        error: 'name missing' 
+      })
+    }
+
+    for (var i = 0; i < persons.length; i++) {
+      if (persons[i].name === body.name) {
+        return response.status(400).json({ 
+          error: 'name must be unique' 
+        })
+      }
+    }
+
+    if (!body.number) {
+      return response.status(400).json({ 
+        error: 'number missing' 
       })
     }
   
