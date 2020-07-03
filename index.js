@@ -23,10 +23,11 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
     })
   })
 
-  app.get('/info', (req, res) => {
+  app.get('/info', (req, res, next) => {
     Person.countDocuments({}, function (err, count) {
       res.send('Phonebook has info for ' + count + ' people<br /><br />' + Date())
     })
+    .catch(error => next(error))
   })
 
   app.get('/api/people/:id', (request, response, next) => {
@@ -46,6 +47,21 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
       response.status(204).end()
     })
     .catch(error => next(error))
+  })
+
+  app.put('/api/people/:id', (request, response, next) => {
+    const body = request.body
+  
+    const person = {
+      name: body.name,
+      number: body.number,
+    }
+  
+    Person.findByIdAndUpdate(request.params.id, person, { new: true })
+      .then(updatedPerson => {
+        response.json(updatedPerson)
+      })
+      .catch(error => next(error))
   })
 
   const generateId = () => {
