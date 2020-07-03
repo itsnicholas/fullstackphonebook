@@ -29,7 +29,7 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
     })
   })
 
-  app.get('/api/people/:id', (request, response) => {
+  app.get('/api/people/:id', (request, response, next) => {
     Person.findById(request.params.id).then(person => {
       if (person) {
         response.json(person)
@@ -37,21 +37,15 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
         response.status(404).end()
       }
     })
-    .catch(error => {
-      console.log(error)
-      response.status(400).send({ error: 'malformatted id' })
-    })
+    .catch(error => next(error))
   })
 
-  app.delete('/api/people/:id', (request, response) => {
+  app.delete('/api/people/:id', (request, response, next) => {
     Person.findByIdAndDelete(request.params.id)
     .then(result => {
       response.status(204).end()
     })
-    .catch(error => {
-      console.log(error)
-      response.status(400).send({ error: 'malformatted id to delete' })
-    })
+    .catch(error => next(error))
   })
 
   const generateId = () => {
@@ -59,7 +53,7 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
     return maxId
   }
   
-  app.post('/api/people', (request, response) => {
+  app.post('/api/people', (request, response, next) => {
     const body = request.body
 
     if (!body.name) {
@@ -97,8 +91,21 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
       person.save().then(savedPerson => {
         response.json(savedPerson)
       })
+      .catch(error => next(error))
     })
   })
+
+  const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+  
+    if (error.name === 'CastError') {
+      return response.status(400).send({ error: 'malformatted id' })
+    }
+  
+    next(error)
+  }
+  
+  app.use(errorHandler)
 
   const PORT = process.env.PORT
   app.listen(PORT, () => {
